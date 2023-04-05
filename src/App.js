@@ -1,7 +1,7 @@
 import './App.css';
 import { useState, useEffect } from 'react';
 
-function App(props) {
+function App() {
   function isTileInUse(grid, [row, col]) {
     // Out-of-bounds squares are always in use
     if (row < 0 || col < 0 || row >= 4 || col >= 4) {
@@ -36,7 +36,7 @@ function App(props) {
 
   function spawnNewTile(grid) {
     // Check if there is no space
-    if (isGameOver()) return;
+    if (isGameOver(grid)) return;
 
     // Find an empty square
     let target;
@@ -98,7 +98,7 @@ function App(props) {
             // Try and move it to the result square
             if (isTileInUse(grid, resultSquare)) {
               // There's a tile in our way - try and combine
-              const requiredValue = getTileValue(resultSquare);
+              const requiredValue = getTileValue(grid, resultSquare);
               if (getTileValue(grid, startingSquare) === requiredValue) {
                 // Only allowed to combine each tile once
                 // [- 2 2 4] => [- - 4 4], not [- - - 8]
@@ -114,7 +114,7 @@ function App(props) {
               break;
             } else {
               // No tile in our way - move it
-              setTileValue(grid, resultSquare, getTileValue(startingSquare));
+              setTileValue(grid, resultSquare, getTileValue(grid, startingSquare));
               setTileValue(grid, startingSquare, null);
             }
           } else {
@@ -127,12 +127,15 @@ function App(props) {
     }
   }
 
-  let [grid, setGrid] = useState(spawnNewTile([
-    [null, null, null, null],
-    [null, null, null, null],
-    [null, null, null, null],
-    [null, null, null, null],
-  ]));
+  // Start with two tiles
+  let [grid, setGrid] = useState(
+    spawnNewTile(spawnNewTile([
+      [null, null, null, null],
+      [null, null, null, null],
+      [null, null, null, null],
+      [null, null, null, null],
+    ]))
+  );
 
   let [numMoves, setNumMoves] = useState(0);
 
