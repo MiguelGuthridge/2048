@@ -2,38 +2,7 @@ import './App.css';
 import { useState, useEffect } from 'react';
 
 function App(props) {
-
-  let [grid, setGrid] = useState([
-    [null, null, null, null],
-    [null, null, null, null],
-    [null, null, null, null],
-    [null, null, null, null],
-  ]);
-
-  let [numMoves, setNumMoves] = useState(0);
-
-  function isGameOver() {
-    for (const row in grid) {
-      for (const col in row) {
-        // Blank tiles means it's not over
-        if (!isTileInUse([row, col])) {
-          return false;
-        }
-        // Check if it can be combined with its neighbours
-        for (const [rOff, cOff] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
-          if (
-            getTileValue([row, col])
-            === getTileValue([row + rOff, col + cOff])
-          ) {
-            return false;
-          }
-        }
-      }
-    }
-    return true;
-  }
-
-  function isTileInUse([row, col]) {
+  function isTileInUse(grid, [row, col]) {
     // Out-of-bounds squares are always in use
     if (row < 0 || col < 0 || row >= 4 || col >= 4) {
       return true;
@@ -41,7 +10,7 @@ function App(props) {
     return grid[row][col] !== null;
   }
 
-  function getTileValue([row, col]) {
+  function getTileValue(grid, [row, col]) {
     // Out-of-bounds squares have value null
     if (row < 0 || col < 0 || row >= 4 || col >= 4) {
       return null;
@@ -49,7 +18,7 @@ function App(props) {
     return grid[row][col];
   }
 
-  function setTileValue([row, col], value) {
+  function setTileValue(grid, [row, col], value) {
     // Out-of-bounds squares
     if (row < 0 || col < 0 || row >= 4 || col >= 4) {
       return;
@@ -65,19 +34,41 @@ function App(props) {
     return [Math.floor(cell / 4), cell % 4];
   }
 
-  function spawnNewTile() {
+  function spawnNewTile(grid) {
     // Check if there is no space
     if (isGameOver()) return;
 
     // Find an empty square
     let target;
-    while (isTileInUse(target = getRandomSquare()));
+    while (isTileInUse(grid, target = getRandomSquare()));
 
     let [row, col] = target;
     grid[row][col] = 2;
+    return grid;
   }
 
-  function moveTiles(rowOffset, colOffset) {
+  function isGameOver(grid) {
+    for (const row in grid) {
+      for (const col in row) {
+        // Blank tiles means it's not over
+        if (!isTileInUse(grid, [row, col])) {
+          return false;
+        }
+        // Check if it can be combined with its neighbours
+        for (const [rOff, cOff] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+          if (
+            getTileValue(grid, [row, col])
+            === getTileValue(grid, [row + rOff, col + cOff])
+          ) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  }
+
+  function moveTiles(grid, rowOffset, colOffset) {
     // Change loop direction based on direction we're moving
     let loopDirection;
     if (rowOffset === -1 | colOffset === -1) {
@@ -103,19 +94,19 @@ function App(props) {
           startingSquare = resultSquare;
           resultSquare = [startingSquare[0] + rowOffset, startingSquare[1] + colOffset];
           // If there is a tile to move
-          if (isTileInUse(startingSquare)) {
+          if (isTileInUse(grid, startingSquare)) {
             // Try and move it to the result square
-            if (isTileInUse(resultSquare)) {
+            if (isTileInUse(grid, resultSquare)) {
               // There's a tile in our way - try and combine
               const requiredValue = getTileValue(resultSquare);
-              if (getTileValue(startingSquare) === requiredValue) {
+              if (getTileValue(grid, startingSquare) === requiredValue) {
                 // Only allowed to combine each tile once
                 // [- 2 2 4] => [- - 4 4], not [- - - 8]
                 if (!combineAllowed[resultSquare[0]][resultSquare[1]]) {
                   break;
                 }
-                setTileValue(resultSquare, requiredValue * 2);
-                setTileValue(startingSquare, null);
+                setTileValue(grid, resultSquare, requiredValue * 2);
+                setTileValue(grid, startingSquare, null);
                 // Prevent people from combining with us
                 combineAllowed[resultSquare[0]][resultSquare[1]] = false;
               }
@@ -123,8 +114,8 @@ function App(props) {
               break;
             } else {
               // No tile in our way - move it
-              setTileValue(resultSquare, getTileValue(startingSquare));
-              setTileValue(startingSquare, null);
+              setTileValue(grid, resultSquare, getTileValue(startingSquare));
+              setTileValue(grid, startingSquare, null);
             }
           } else {
             // No tile, nothing to do
@@ -135,6 +126,15 @@ function App(props) {
       }
     }
   }
+
+  let [grid, setGrid] = useState(spawnNewTile([
+    [null, null, null, null],
+    [null, null, null, null],
+    [null, null, null, null],
+    [null, null, null, null],
+  ]));
+
+  let [numMoves, setNumMoves] = useState(0);
 
   const keyDownHandler = event => {
     switch (event.code) {
@@ -153,7 +153,7 @@ function App(props) {
       default:
         return;
     }
-    spawnNewTile();
+    spawnNewTile(grid);
     // https://stackoverflow.com/a/63092436/6335363
     setGrid([...grid]);
     setNumMoves(numMoves + 1);
@@ -183,7 +183,7 @@ function App(props) {
           }</tr>
         )}
       </table>
-      {isGameOver() ? <h2>Game over</h2> : <></>}
+      {isGameOver(grid) ? <h2>Game over</h2> : <></>}
       <p>Number of moves: {numMoves}</p>
     </div>
   );
