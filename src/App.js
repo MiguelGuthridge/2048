@@ -142,16 +142,16 @@ function App() {
   const keyDownHandler = event => {
     switch (event.code) {
       case "ArrowUp":
-        moveTiles(-1, 0);
+        moveTiles(grid, -1, 0);
         break;
       case "ArrowDown":
-        moveTiles(1, 0);
+        moveTiles(grid, 1, 0);
         break;
       case "ArrowLeft":
-        moveTiles(0, -1);
+        moveTiles(grid, 0, -1);
         break;
       case "ArrowRight":
-        moveTiles(0, 1);
+        moveTiles(grid, 0, 1);
         break;
       default:
         return;
