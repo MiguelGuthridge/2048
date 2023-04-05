@@ -48,8 +48,8 @@ function App() {
   }
 
   function isGameOver(grid) {
-    for (const row in grid) {
-      for (const col in row) {
+    for (const row of [0, 1, 2, 3]) {
+      for (const col of [0, 1, 2, 3]) {
         // Blank tiles means it's not over
         if (!isTileInUse(grid, [row, col])) {
           return false;
